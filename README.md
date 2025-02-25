@@ -16,4 +16,11 @@ Description on how to run code below:
 
 ## Description of Files
 
+1. main.py acts as a main file to run all of the experiments and hyperparameter tuning
+
+2. hyperparam.py is our file for all of our classifiers and hyperparameter tuning methods. The specified hyperparamter values for all experiments are contained here. 
+
+3. The optimized csv's are the metrics and hyperparameters generated from hyperparameter tuning
+
+4. tune1 csv's correspond to the metrics in the first set of experimentation. tune2 csv's correspond to the metrics in the second set of experimentation. tune3 csv's correspond to the metrics in the third set of experimentation.
 

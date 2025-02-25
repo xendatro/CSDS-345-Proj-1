@@ -87,6 +87,110 @@ params_nn1 = {
     'mlpclassifier__solver': ['sgd', 'adam'],
 }
 
+params_dt2 = {
+    'max_depth': 5,
+    'min_samples_split': 2,
+
+    'min_samples_leaf': 1,
+    'max_leaf_nodes': 5,
+
+    'splitter': 'best'
+
+}
+params_bayes2 = {
+
+    'var_smoothing': 1e-10
+
+}
+params_knn2 = {
+    'kneighborsclassifier__n_neighbors': 5,
+    'kneighborsclassifier__weights': 'uniform'
+}
+params_svm2 = {
+
+    'svc__C': 1,
+
+    'svc__kernel': 'linear'
+}
+params_nn2 = {
+    'mlpclassifier__hidden_layer_sizes': (200,100),
+
+    'mlpclassifier__alpha': 0.05,
+
+    'mlpclassifier__learning_rate': 'constant',
+    'mlpclassifier__solver': 'adam',
+}
+
+
+params_dt3 = {
+    'max_depth': 10,
+    'min_samples_split': 2,
+
+    'min_samples_leaf': 5,
+    'max_leaf_nodes': 10,
+
+    'splitter': 'random'
+
+}
+params_bayes3 = {
+
+    'var_smoothing': 1e-9
+
+}
+params_knn3 = {
+    'kneighborsclassifier__n_neighbors': 10,
+    'kneighborsclassifier__weights': 'distance'
+}
+params_svm3 = {
+
+    'svc__C': 2,
+
+    'svc__kernel': 'linear'
+}
+params_nn3 = {
+    'mlpclassifier__hidden_layer_sizes': (100,90),
+
+    'mlpclassifier__alpha': 0.0001,
+
+    'mlpclassifier__learning_rate': 'constant',
+    'mlpclassifier__solver': 'adam',
+}
+
+
+params_dt4 = {
+    'max_depth': 2,
+    'min_samples_split': 5,
+
+    'min_samples_leaf': 3,
+    'max_leaf_nodes': 10,
+
+    'splitter': 'random'
+
+}
+params_bayes4 = {
+
+    'var_smoothing': 1e-8
+
+}
+params_knn4 = {
+    'kneighborsclassifier__n_neighbors': 3,
+    'kneighborsclassifier__weights': 'distance'
+}
+params_svm4 = {
+
+    'svc__C': 3,
+
+    'svc__kernel': 'linear'
+}
+params_nn4 = {
+    'mlpclassifier__hidden_layer_sizes': (200,100),
+
+    'mlpclassifier__alpha': 0.0001,
+
+    'mlpclassifier__learning_rate': 'constant',
+    'mlpclassifier__solver': 'adam',
+}
+
 
 def hyperparameter_tune_tree(X:np.ndarray, y:np.ndarray,params_dt:dict)->dict:
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=SEED)
@@ -137,7 +241,7 @@ def applyCrossValidation(model, X, y):
     }
     return results
 
-def hyperparamter_tune_save(X, y, output_file_name:str, params_dt = params_dt1, params_bayes = params_bayes1, params_knn = params_knn1, params_svm = params_svm1, params_nn = params_nn1):
+def hyperparamter_tune_save(X, y, output_file_name:str, params_dt, params_bayes, params_knn, params_svm, params_nn):
     results = []
 
     dt_model, dt_params = hyperparameter_tune_tree(X, y, params_dt)
@@ -163,12 +267,62 @@ def hyperparamter_tune_save(X, y, output_file_name:str, params_dt = params_dt1, 
     df = pd.DataFrame(results)
     df.to_csv(output_file_name, index=False)
 
+def hyperparamter_tune_custom(X, y, output_file_name, params_dt, params_bayes, params_knn, params_svm, params_nn):
+    results = []
+
+    treeModel = tree.DecisionTreeClassifier(max_depth=params_dt["max_depth"], min_samples_split=params_dt["min_samples_split"], min_samples_leaf=params_dt["min_samples_leaf"], max_leaf_nodes=params_dt["max_leaf_nodes"], splitter=params_dt["splitter"])
+    dt_cv = applyCrossValidation(treeModel, X, y)
+    results.append({'Model': 'Decision Tree', **dt_cv})
+
+    bayes_model = bayes.GaussianNB(var_smoothing=params_bayes["var_smoothing"])
+    b_cv = applyCrossValidation(bayes_model, X, y)
+    results.append({'Model': 'Bayes', **b_cv})
+
+    knn_model = make_pipeline(preprocessing.StandardScaler(), neighbors.KNeighborsClassifier(
+        n_neighbors=params_knn["kneighborsclassifier__n_neighbors"],
+        weights=params_knn["kneighborsclassifier__weights"]
+        )) 
+    knn_cv = applyCrossValidation(knn_model, X, y)
+    results.append({'Model': 'KNN', **knn_cv})  
+
+    svm_model = make_pipeline(preprocessing.StandardScaler(), svm.SVC(
+        C=params_svm['svc__C'],
+        kernel=params_svm["svc__kernel"]
+    )) 
+    svc_cv = applyCrossValidation(svm_model, X, y)
+    results.append({'Model': 'SVM', **svc_cv})  
+
+    nn_model = make_pipeline(preprocessing.StandardScaler(), neural_network.MLPClassifier(
+        hidden_layer_sizes=params_nn["mlpclassifier__hidden_layer_sizes"],
+        alpha=params_nn["mlpclassifier__alpha"],
+        learning_rate=params_nn["mlpclassifier__learning_rate"],
+        solver=params_nn["mlpclassifier__solver"]
+    )) 
+    nn_cv = applyCrossValidation(nn_model, X, y)
+    results.append({'Model': 'NN', **nn_cv})  
+
+    df = pd.DataFrame(results)
+    df.to_csv(output_file_name, index=False)
+
+
 # X, y= createArrays(src='src/files/set2.txt') #/Users/prestonstuff/Documents/GitHub/project1b/project1_dataset2.txt
 
 
 # hyperparamter_tune_save(X, y)
 
 
-def run(file_name, output_file_name):
+def optimized(file_name, output_file_name):
     X, y = createArrays(file_name=file_name)
-    hyperparamter_tune_save(X, y, output_file_name)
+    hyperparamter_tune_save(X, y, output_file_name, params_dt=params_dt1, params_bayes = params_bayes1, params_knn = params_knn1, params_svm = params_svm1, params_nn = params_nn1)
+
+def tune1(file_name, output_file_name):
+    X, y = createArrays(file_name=file_name)
+    hyperparamter_tune_custom(X, y, output_file_name, params_dt=params_dt2, params_bayes = params_bayes2, params_knn = params_knn2, params_svm = params_svm2, params_nn = params_nn2)
+
+def tune2(file_name, output_file_name):
+    X, y = createArrays(file_name=file_name)
+    hyperparamter_tune_custom(X, y, output_file_name, params_dt=params_dt3, params_bayes = params_bayes3, params_knn = params_knn3, params_svm = params_svm3, params_nn = params_nn3)
+
+def tune3(file_name, output_file_name):
+    X, y = createArrays(file_name=file_name)
+    hyperparamter_tune_custom(X, y, output_file_name, params_dt=params_dt4, params_bayes = params_bayes4, params_knn = params_knn4, params_svm = params_svm4, params_nn = params_nn4)
